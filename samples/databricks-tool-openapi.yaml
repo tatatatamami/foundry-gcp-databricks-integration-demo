@@ -1,0 +1,148 @@
+openapi: "3.0.0"
+info:
+  title: Databricks Sales Query Tool
+  description: GCP 上の Databricks SQL Warehouse から sales_transactions テーブルだけを照会する
+  version: "1.1"
+servers:
+  - url: https://8259552429116742.2.gcp.databricks.com
+paths:
+  /api/2.0/sql/statements:
+    post:
+      operationId: execute_sales_query
+      summary: sales_transactions テーブルを SQL で照会する
+      description: |
+        Databricks SQL Warehouse に SQL を送信し、samples.bakehouse.sales_transactions
+        テーブルの結果だけを返す。statement には 1 つの読み取り専用 SELECT または WITH 文を指定する。
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - warehouse_id
+                - catalog
+                - schema
+                - statement
+                - wait_timeout
+                - on_wait_timeout
+                - format
+                - disposition
+                - row_limit
+                - byte_limit
+              properties:
+                warehouse_id:
+                  type: string
+                  description: Databricks SQL Warehouse の ID。固定値のみ許可する。
+                  enum:
+                    - "729062798c1046d0"
+                  default: "729062798c1046d0"
+                catalog:
+                  type: string
+                  description: 対象 Catalog 名。固定値のみ許可する。
+                  enum:
+                    - samples
+                  default: "samples"
+                schema:
+                  type: string
+                  description: 対象 Schema 名。固定値のみ許可する。
+                  enum:
+                    - bakehouse
+                  default: "bakehouse"
+                statement:
+                  type: string
+                  description: |
+                    実行する 1 つの読み取り専用 SELECT または WITH 文。
+                    samples.bakehouse.sales_transactions 以外の catalog、schema、table、view、function、system table を参照しない。
+                  example: "SELECT COUNT(*) AS row_count FROM sales_transactions"
+                wait_timeout:
+                  type: string
+                  description: 同期待機タイムアウト。初期 PoC ではポーリング API を使わないため 30s に固定する。
+                  enum:
+                    - 30s
+                  default: "30s"
+                on_wait_timeout:
+                  type: string
+                  description: タイムアウト時の動作。初期 PoC では実行を継続させない。
+                  enum:
+                    - CANCEL
+                  default: "CANCEL"
+                format:
+                  type: string
+                  description: 結果形式。Agent が解釈しやすい JSON 配列に固定する。
+                  enum:
+                    - JSON_ARRAY
+                  default: "JSON_ARRAY"
+                disposition:
+                  type: string
+                  description: 結果返却方法。初期 PoC ではレスポンス本文にインラインで返す。
+                  enum:
+                    - INLINE
+                  default: "INLINE"
+                row_limit:
+                  type: integer
+                  description: API レベルの最大返却行数。
+                  enum:
+                    - 20
+                  default: 20
+                byte_limit:
+                  type: integer
+                  description: API レベルの最大返却バイト数。
+                  enum:
+                    - 100000
+                  default: 100000
+      responses:
+        "200":
+          description: クエリ結果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statement_id:
+                    type: string
+                    description: ステートメント ID
+                  status:
+                    type: object
+                    properties:
+                      state:
+                        type: string
+                        description: "SUCCEEDED / FAILED / PENDING / RUNNING"
+                  manifest:
+                    type: object
+                    description: スキーマ情報
+                    properties:
+                      schema:
+                        type: object
+                        properties:
+                          columns:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                type_name:
+                                  type: string
+                  result:
+                    type: object
+                    description: クエリ結果データ
+                    properties:
+                      data_array:
+                        type: array
+                        description: 行データ（列順は manifest.schema.columns に対応）
+                        items:
+                          type: array
+                          items:
+                            type: string
+                            nullable: true
+components:
+  securitySchemes:
+    bearerAuth:
+      type: apiKey
+      name: Authorization
+      in: header
+security:
+  - bearerAuth: []

@@ -1,0 +1,14 @@
+$schema: https://azuremlschemas.azureedge.net/latest/schedule.schema.json
+name: databricks-sales-retrain-daily
+display_name: Databricks sales retraining daily
+description: Daily retraining job that reads sales data from Google Cloud Databricks.
+
+trigger:
+  type: recurrence
+  frequency: day
+  interval: 1
+  schedule:
+    hours: [9]
+    minutes: [0]
+
+create_job: ./sales-retrain-job.yml

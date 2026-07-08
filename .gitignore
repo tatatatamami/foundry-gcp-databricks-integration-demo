@@ -10,6 +10,15 @@
 *.userosscache
 *.sln.docstates
 *.env
+.env.local
+
+# Job outputs and downloaded artifacts
+outputs/
+azureml-downloads/
+.sync-checkpoints/
+
+# Local working notes
+save.md
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

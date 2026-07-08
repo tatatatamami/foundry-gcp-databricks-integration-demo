@@ -1,0 +1,18 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+display_name: databricks-sales-retrain
+experiment_name: databricks-sales-retraining
+description: Train a sales price model from Google Cloud Databricks data.
+
+code: ..
+
+command: >-
+  python samples/train_sales_model_from_databricks.py
+  --limit 500
+  --output-dir outputs/sales-price-model
+
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
+
+environment_variables:
+  DATABRICKS_PAT: "<set-at-submit-time>"

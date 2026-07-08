@@ -1,0 +1,151 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Databricks Sales Query Tool",
+    "description": "Query only the samples.bakehouse.sales_transactions table in a GCP Databricks SQL Warehouse.\n\nSECURITY NOTE: Instructions and OpenAPI schema constraints are not authorization boundaries. Enforce access through Databricks authentication, SQL Warehouse permissions, Unity Catalog privileges, and applicable network controls. Use a least-privilege PAT or service principal scoped to SELECT on the target table only.",
+    "version": "1.2"
+  },
+  "servers": [
+    {
+      "url": "https://<your-databricks-host>.gcp.databricks.com"
+    }
+  ],
+  "paths": {
+    "/api/2.0/sql/statements": {
+      "post": {
+        "operationId": "execute_sales_query",
+        "summary": "Query the sales_transactions table",
+        "description": "Send one read-only SELECT or WITH statement to the Databricks SQL Warehouse. Query only samples.bakehouse.sales_transactions. The request body must contain only warehouse_id and statement.",
+        "security": [
+          {
+            "Authorization": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "warehouse_id",
+                  "statement"
+                ],
+                "properties": {
+                  "warehouse_id": {
+                    "type": "string",
+                    "description": "Databricks SQL Warehouse ID. Must be the fixed enum value.",
+                    "enum": [
+                      "<your-warehouse-id>"
+                    ],
+                    "default": "<your-warehouse-id>"
+                  },
+                  "statement": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "One read-only SELECT or WITH statement. IMPORTANT: This field is not validated server-side by the schema. The actual authorization boundary is the Databricks identity permission. Use a least-privilege token scoped to SELECT on the target table only.",
+                    "example": "SELECT COUNT(*) AS row_count FROM samples.bakehouse.sales_transactions"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "statement_id": {
+                      "type": "string",
+                      "description": "Statement ID"
+                    },
+                    "status": {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "description": "PENDING, RUNNING, SUCCEEDED, FAILED, CANCELED, or CLOSED"
+                        }
+                      }
+                    },
+                    "error": {
+                      "type": "object",
+                      "description": "Present when state is FAILED.",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message."
+                        }
+                      }
+                    },
+                    "manifest": {
+                      "type": "object",
+                      "description": "Schema metadata",
+                      "properties": {
+                        "schema": {
+                          "type": "object",
+                          "properties": {
+                            "columns": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "type_name": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "result": {
+                      "type": "object",
+                      "description": "Query result data",
+                      "properties": {
+                        "data_array": {
+                          "type": "array",
+                          "description": "Rows. Column order matches manifest.schema.columns.",
+                          "items": {
+                            "type": "array",
+                            "items": {
+                            "type": ["string", "null"]
+                          }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "Authorization": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "Authorization": []
+    }
+  ]
+}
